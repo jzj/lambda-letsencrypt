@@ -1,0 +1,45 @@
+{
+    "Version": "{{ item.version |d('2012-10-17') }}",
+    "Statement": [{
+        "Effect": "Allow",
+        "Action": [
+            "s3:ListBucketByTags",
+            "s3:ListBucket"
+        ],
+        "Resource": "arn:aws:s3:::linx-cloud-certs"
+    }, {
+        "Effect": "Allow",
+        "Action": [
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:DeleteObject"
+        ],
+        "Resource": "arn:aws:s3:::linx-cloud-certs/*"
+    }, {
+        "Effect": "Allow",
+        "Action": [
+            "logs:CreateLogGroup",
+            "logs:PutLogEvents",
+            "logs:CreateLogStream"
+
+        ],
+        "Resource": "*"
+    }, {
+        "Effect": "Allow",
+        "Action": [
+            "acm:DescribeCertificate",
+            "acm:ListCertificates",
+            "acm:AddTagsToCertificate",
+            "acm:ListTagsForCertificate",
+            "acm:ImportCertificate"
+        ],
+        "Resource": "*"
+    }, {
+        "Effect": "Allow",
+        "Action": "sts:AssumeRole",
+        "Resource": [
+            "arn:aws:iam::495575148174:role/lambda-letsencrypt-from-chaordic-search",
+            "arn:aws:iam::280947074774:role/lambda-letsencrypt"
+        ]
+    }]
+}

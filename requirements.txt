@@ -1,0 +1,5 @@
+boto3==1.9.155
+certbot==0.34.2
+certbot-dns-route53==0.34.2
+urllib3==1.24.3
+./plugin
