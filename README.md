@@ -8,9 +8,10 @@ with the supplied names and is able to solve the HTTP-01 and DNS challenges.
 It supports requesting normal FQDN and wildcard certificates and renew them if
 necessary.
 
-For example, `domains=example.org,*.example.org&certname=example` the certificate
-file will have the name `example.pem` and will be imported to ACM with the
-name `example`.
+For example, `domains=example.org,*.example.org&certname=example&force=false` 
+the certificate file will have the name `example.pem` and will be imported to 
+ACM with the name `example`. Use the force flag to forcefully make CertBot
+renew the certificate.
 
 After the certificate is generated the script upload it to S3 together with it's
 internal state compressed in a tar.gz file and import it to ACM, overwriting an
@@ -82,4 +83,4 @@ Configuration is done through environment variables defined inside the Makefile
 
 #### Request or renew certificate
 
-`curl -L http://<loadbalancer hostname>/.well-known/provision?domains=example.org,*.example.org&certname=example`
+`curl -L http://<loadbalancer hostname>/.well-known/provision?domains=example.org,*.example.org&certname=example&force=false`

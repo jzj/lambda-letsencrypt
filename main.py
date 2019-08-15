@@ -147,8 +147,8 @@ def initialize():
     except FileExistsError:
         raise
 
-    logger.info('Changing log level to {}\nnow {}'.format(env['log_level'],
-                                                          logger.level))
+    logger.info('Changing log level to {}\nnow {}'.format(
+        env['log_level'], logger.level))
     change_log_level(env['log_level'])
     aws.change_log_level(env['log_level'])
 
@@ -183,6 +183,7 @@ def run_certbot(domains, certname):
     logger.info('Starting certbot')
 
     assume_role = []
+    extra_opts = []
     if env['s3_role'] is not None:
         assume_role = assume_role + [
             '--certbot-lambda-s3:lambda-s3-s3-role', env['s3_role']
@@ -191,6 +192,9 @@ def run_certbot(domains, certname):
         assume_role = assume_role + [
             '--certbot-lambda-s3:lambda-s3-r53-role', env['r53_role']
         ]
+    if env['force']:
+        logger.debug('Force value: {}'.format(env['force']))
+        extra_opts = extra_opts + ['--force-renewal']
     try:
         certbot.main.main([
             'certonly',  # Obtain a cert but don't install it
@@ -217,7 +221,7 @@ def run_certbot(domains, certname):
             env['bucket'],
             '--certbot-lambda-s3:lambda-s3-s3-path',
             env['bucket_dir']
-        ] + assume_role + env['le_env'])
+        ] + assume_role + env['le_env'] + extra_opts)
     except Exception as e:
         err = 'Certbot failed with the following error:\n{}'.format(e)
         return abort(err)
@@ -231,14 +235,15 @@ def run_certbot(domains, certname):
 def validate_hash(validation):
 
     try:
-        logger.debug('Trying to get file {}:{}'.format(env['bucket'], env[
-            'bucket_dir'] + '/' + env['hashs'] + '/' + validation))
+        logger.debug('Trying to get file {}:{}'.format(
+            env['bucket'],
+            env['bucket_dir'] + '/' + env['hashs'] + '/' + validation))
         response = aws.get_file_contents(
             env['bucket'],
             env['bucket_dir'] + '/' + env['hashs'] + '/' + validation)
         status = 200
-        logger.debug(
-            'Challenge {} answered with {}'.format(validation, response))
+        logger.debug('Challenge {} answered with {}'.format(
+            validation, response))
     except ClientError as e:
         logger.error('Unexpected error when trying to get Hash {}: {}'.format(
             validation, e))
@@ -284,6 +289,16 @@ def handler(event, context):
             certname = parameters['certname']
         else:
             domains.split(',')[0]
+
+        if 'force' in parameters:
+            if parameters['force'] in [
+                    'true', 'True', 'yes', 'Yes', 'enabled', 'Enabled'
+            ]:
+                env['force'] = True
+            else:
+                env['force'] = False
+        else:
+            env['force'] = False
 
         logger.info(
             'Running certbot for the following domains: {}'.format(domains))
