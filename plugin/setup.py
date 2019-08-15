@@ -4,7 +4,7 @@ from setuptools import find_packages
 setuptools.setup(
     name='certbot-lambda-s3',
     version='0.1',
-    packages=find_packages(),
+    packages=['certbot_lambda_s3'],
     include_package_data=True,
     install_requires=[
         'certbot',
@@ -15,4 +15,5 @@ setuptools.setup(
         'certbot.plugins': [
             'lambda-s3 = certbot_lambda_s3.certbot_lambda_s3:Authenticator',
         ],
-    }, )
+    },
+)
