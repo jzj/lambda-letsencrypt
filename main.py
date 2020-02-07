@@ -17,6 +17,9 @@ env = {}
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+LOCK_FILE = '.lock'
+BACKUP_FILE = 'backup.tar.gz'
+
 
 class LoggerWriter:
     def write(self, message):
@@ -32,12 +35,12 @@ sys.stderr = LoggerWriter()
 
 def unlock():
     logger.debug('Removing lock file')
-    aws.delete_file(env['bucket'], env['bucket_dir'] + '/.lock')
+    aws.delete_file(env['bucket'], env['bucket_dir'] + '/' + LOCK_FILE)
 
 
 def lock():
     logger.debug('Creating lock file')
-    aws.put_object('', env['bucket_dir'] + '/.lock', env['bucket'])
+    aws.put_object('', env['bucket_dir'] + '/' + LOCK_FILE, env['bucket'])
 
 
 def read_file(path):
@@ -61,12 +64,12 @@ def cleanup():
     # Check if any certificate has been updated, skip upload to S3 if it doesnt
 
     logger.info('Compressing certbot config dir')
-    with tarfile.open('/tmp/backup.tar.gz', mode='w:gz') as archive:
+    with tarfile.open('/tmp/' + BACKUP_FILE, mode='w:gz') as archive:
         archive.add(env['config_dir'], arcname='')
 
     logger.info('Uploading certbot config dir to S3')
-    aws.upload_file('/tmp/backup.tar.gz', env['bucket_dir'] + '/backup.tar.gz',
-                    env['bucket'])
+    aws.upload_file('/tmp/' + BACKUP_FILE,
+                    env['bucket_dir'] + '/' + BACKUP_FILE, env['bucket'])
 
     logger.info('Uploading certificates to S3')
     aws.upload_dir(env['config_dir'] + '/live',
@@ -130,10 +133,10 @@ def change_log_level(level):
 def check_lock():
     logger.debug('Checking if lock exists')
     try:
-        aws.download_file(env['bucket_dir'] + '/.lock', '/tmp/.lock',
-                          env['bucket'])
+        aws.download_file(env['bucket_dir'] + '/' + LOCK_FILE,
+                          '/tmp/' + LOCK_FILE, env['bucket'])
         raise FileExistsError
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.debug('No lock found, continuing')
         lock()
 
@@ -162,9 +165,9 @@ def initialize():
 
         logger.info('Attempting to restore internal structure from backup')
         try:
-            aws.download_file(env['bucket_dir'] + '/backup.tar.gz',
-                              '/tmp/backup.tar.gz', env['bucket'])
-            with tarfile.open('/tmp/backup.tar.gz', 'r:gz') as archive:
+            aws.download_file(env['bucket_dir'] + '/' + BACKUP_FILE,
+                              '/tmp/' + BACKUP_FILE, env['bucket'])
+            with tarfile.open('/tmp/' + BACKUP_FILE, 'r:gz') as archive:
                 archive.extractall(path=env['config_dir'])
         except FileNotFoundError:
             logger.info('No backup found in S3, continuing')
