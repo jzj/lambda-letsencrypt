@@ -1,13 +1,14 @@
 import boto3
 from botocore.exceptions import ClientError
 import certbot.main
-import datetime
+from datetime import datetime
 import os
 import subprocess
 import shutil
 import logging
 import tarfile
 import sys
+from OpenSSL import crypto
 
 import aws
 
@@ -253,6 +254,20 @@ def validate_hash(validation):
     return {'statusCode': status, 'body': response}
 
 
+def cert_renewed(certs):
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM, certs['certificate'])
+    issued = datetime.strptime(cert.get_notBefore().decode(), "%Y%m%d%H%M%SZ")
+
+    now = datetime.utcnow()
+
+    if now.date() == issued.date():
+        logger.info('Certificate was renewed')
+        return True
+    else:
+        logger.info('Certificate not renewed, skipping import to ACM')
+        return False
+
+
 def handler(event, context):
     path = event.get('path')
     domains = None
@@ -307,10 +322,11 @@ def handler(event, context):
 
         if result['statusCode'] == 200:
             certificate = get_certificate_path(certname)
-            logger.info('Uploading provisioned certs to ACM')
-            if env['acm_role'] is not None:
-                aws.change_acm_role(env['acm_role'])
-            aws.upload_cert_to_acm(certificate, certname)
+            if cert_renewed(certificate):
+                logger.info('Uploading provisioned certs to ACM')
+                if env['acm_role'] is not None:
+                    aws.change_acm_role(env['acm_role'])
+                aws.upload_cert_to_acm(certificate, certname)
 
         return result
 
