@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-from certbot_dns_route53 import dns_route53
+from certbot_dns_route53._internal import dns_route53
 
 import boto3
 
