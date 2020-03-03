@@ -1,5 +1,7 @@
-boto3==1.9.155
-certbot==0.34.2
-certbot-dns-route53==0.34.2
+acme==1.2.0
+boto3==1.12.12
+botocore==1.15.12
+certbot==1.2.0
+certbot-dns-route53==1.2.0
 urllib3==1.24.3
 ./plugin
