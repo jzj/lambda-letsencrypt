@@ -47,7 +47,7 @@ def delete_file(bucket, key):
 
 
 def put_object(body, key, bucket):
-    client_s3.put_object(Body=body, Key=key, Bucket=bucket)
+    client_s3.put_object(Body=body, Key=key, Bucket=bucket, ACL='bucket-owner-full-control')
 
 
 def upload_file(source_file, destination_file, bucket):
@@ -55,7 +55,7 @@ def upload_file(source_file, destination_file, bucket):
     try:
         logger.info('Uploading file {} to {} on bucket {}'.format(
             source_file, destination_file, bucket))
-        client_s3.upload_file(source_file, bucket, destination_file)
+        client_s3.upload_file(source_file, bucket, destination_file, ExtraArgs={'ACL': 'bucket-owner-full-control'})
     except ClientError as e:
         logger.error('Unexpected error when uploading file {}: {}'.format(
             source_file, e))
